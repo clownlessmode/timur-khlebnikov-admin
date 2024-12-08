@@ -1,0 +1,17 @@
+{
+  "editor.formatOnSave": true,
+  "prettier.requireConfig": true,
+  "prettier.trailingComma": "es5",
+  "prettier.bracketSpacing": true,
+  "prettier.singleQuote": true,
+  "prettier.useTabs": false,
+  "prettier.semi": true,
+  "prettier.endOfLine": "auto",
+  "eslint.validate": [
+    "javascript",
+    "typescript",
+    "javascriptreact",
+    "typescriptreact"
+  ],
+  "files.eol": "\n"
+}
