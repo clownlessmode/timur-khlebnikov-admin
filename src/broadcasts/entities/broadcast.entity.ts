@@ -2,6 +2,7 @@ import { DefaultEntity } from 'common/entities/default.entity';
 import { Group } from 'src/groups/entities/group.entity';
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 import BroadcastStatus from './broadcast-status.enum';
+import { ApiProperty } from '@nestjs/swagger';
 
 @Entity()
 export class Broadcast extends DefaultEntity {
@@ -11,8 +12,12 @@ export class Broadcast extends DefaultEntity {
   @Column()
   message: string;
 
-  @Column('bytea', { nullable: true })
-  files: Buffer[]; // Массив бинарных данных для хранения файлов
+  // @ApiProperty({
+  //   description: 'Array of image URLs related to the report',
+  //   type: [String],
+  // })
+  // @Column('text', { array: true })
+  // images: string[];
 
   @ManyToMany(() => Group, (group) => group.broadcasts)
   @JoinTable()

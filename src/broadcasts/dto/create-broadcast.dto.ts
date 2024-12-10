@@ -1,4 +1,10 @@
-import { IsArray, IsString, ArrayNotEmpty, IsNotEmpty } from 'class-validator';
+import {
+  IsArray,
+  IsString,
+  ArrayNotEmpty,
+  IsNotEmpty,
+  IsOptional,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateBroadcastDto {
@@ -25,4 +31,19 @@ export class CreateBroadcastDto {
   @IsArray()
   @ArrayNotEmpty()
   groupIds: string[];
+
+  // @ApiProperty({
+  //   type: 'array',
+  //   items: {
+  //     type: 'string',
+  //     format: 'binary',
+  //   },
+  //   description: 'Images to upload',
+  //   required: true,
+  // })
+  // @IsOptional()
+  // @IsArray()
+  // @ArrayNotEmpty()
+  // @IsNotEmpty()
+  // images: Express.Multer.File[];
 }

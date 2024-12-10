@@ -16,6 +16,7 @@ import { RegisterDto } from 'src/auth/dto/register.dto';
 import { MessagesService } from 'src/messages/messages.service';
 import { MessagesGateway } from 'src/messages/messages.gateway';
 import Variant from 'src/messages/entities/variant.enum';
+import generateName from 'common/utils/generate-name';
 
 @Update()
 @Injectable()
@@ -109,7 +110,7 @@ export class BotService {
 
     try {
       // Регистрация пользователя
-      // await this.authService.register(ctx.from);
+      await this.authService.register(ctx.from);
 
       // Уведомление администратора
       const user = ctx.from;
@@ -156,7 +157,7 @@ export class BotService {
             error.stack,
           );
         }
-      }, 100000); // 10 секунд
+      }, 1000); // 10 секунд
     } catch (error) {
       this.logger.error('Failed to notify admin about new user', error.stack);
     }
@@ -190,11 +191,35 @@ export class BotService {
   }
 
   // --- 4. Отправка сообщения пользователю ---
-  async sendMessageToUser(user: User, message: string): Promise<void> {
+  async sendMessageToUser(
+    user: User,
+    message: string,
+    imageUrl?: string, // Добавляем необязательный параметр для изображения
+  ): Promise<void> {
     try {
       if (user.telegram && user.telegram.telegram_id) {
-        await this.bot.telegram.sendMessage(user.telegram.telegram_id, message);
-        this.logger.log(`Message sent to user ${user.telegram.telegram_id}`);
+        if (imageUrl) {
+          // Если есть изображение, отправляем фото с подписью
+          await this.bot.telegram.sendPhoto(
+            user.telegram.telegram_id,
+            imageUrl,
+            {
+              caption: message, // Используем message как подпись
+            },
+          );
+          this.logger.log(
+            `Photo with caption sent to user ${user.telegram.telegram_id}`,
+          );
+        } else {
+          // Если изображения нет, отправляем только текстовое сообщение
+          await this.bot.telegram.sendMessage(
+            user.telegram.telegram_id,
+            message,
+          );
+          this.logger.log(`Message sent to user ${user.telegram.telegram_id}`);
+        }
+
+        // Обновляем состояние пользователя, если нужно
         user.hasBanned = false;
         await this.manager.save(User, user);
       } else {
@@ -297,20 +322,63 @@ export class BotService {
   async handleMessage(@Ctx() ctx: Context) {
     const user = await this.usersService.findByTelegram(ctx.from.id);
     console.log(ctx.message);
+
     if ('text' in ctx.message) {
       console.log('trying to send message', user.id);
 
+      // Получаем список подключенных клиентов в комнате
+      const roomClients = await this.messagesGateway.server
+        .in(user.id)
+        .fetchSockets();
+
+      // Проверяем, есть ли активные сокеты в комнате пользователя
+      const isInRoom = roomClients.length > 0;
+
+      // Отправляем сообщение в комнату
       await this.messagesGateway.server.to(user.id).emit('new', {
         id: user.id,
         message: ctx.message.text,
         variant: Variant.INCOMING,
+        roomId: user.id,
       });
 
+      // Создаем сообщение в базе данных
       await this.messagesService.create({
         content: ctx.message.text,
         variant: Variant.INCOMING,
         userId: user.id,
       });
+
+      // Если пользователь не в комнате, отправляем уведомление администратору
+      if (!isInRoom) {
+        const notifyAdmin = `✉️ Новоe сообщение от ${generateName({
+          first_name: user.telegram.first_name,
+          username: user.telegram.username,
+          id: user.id,
+          name: user.name,
+        })}. Проверьте чат!`;
+        const searchParams = new URLSearchParams({
+          first_name: user.telegram.first_name || '',
+          username: user.telegram.username || '',
+          name: user.name || '',
+          userId: user.id || '',
+        }).toString();
+        await this.adminBot.telegram.sendMessage(
+          this.adminId,
+          escapeMessage(notifyAdmin),
+          {
+            parse_mode: 'MarkdownV2',
+            ...Markup.inlineKeyboard([
+              [
+                Markup.button.webApp(
+                  'Перейти в чат',
+                  `https://r6nt2plp-3000.asse.devtunnels.ms/chats/${user.id}?${searchParams}`,
+                ),
+              ],
+            ]),
+          },
+        );
+      }
     }
   }
 }
