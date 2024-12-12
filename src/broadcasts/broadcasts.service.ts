@@ -11,6 +11,7 @@ import { Group } from 'src/groups/entities/group.entity';
 import { User } from 'src/users/entities/user.entity';
 import BroadcastStatus from './entities/broadcast-status.enum';
 import { BotService } from 'src/bot/bot.service';
+import { ImageUploadService } from 'common/utils/image-upload.service';
 
 @Injectable()
 export class BroadcastsService {
@@ -20,17 +21,29 @@ export class BroadcastsService {
     private readonly dataSource: DataSource,
     private readonly botService: BotService,
     private readonly manager: EntityManager,
+    private readonly imageUploadService: ImageUploadService,
   ) {}
 
   // Метод для создания новой рассылки
-  async createBroadcast(broadcastData: {
-    name: string;
-    message: string;
-    groupIds: string[];
-  }): Promise<Broadcast> {
+  async createBroadcast(
+    broadcastData: {
+      name: string;
+      message: string;
+      groupIds: string[];
+    },
+    files: Express.Multer.File[] = [], // Необязательный массив файлов с дефолтным пустым массивом
+  ): Promise<Broadcast> {
+    // Логика создания броадкаста
+
     return this.dataSource.transaction(async (manager: EntityManager) => {
       const { name, message, groupIds } = broadcastData;
-
+      const imageUrls = files?.length
+        ? await Promise.all(
+            files.map((image) =>
+              this.imageUploadService.uploadImageToImgbb(image),
+            ),
+          )
+        : [];
       // Используем find с In для получения групп и загрузки связанных пользователей
       const groups = await manager.getRepository(Group).find({
         where: {
@@ -49,6 +62,7 @@ export class BroadcastsService {
         message,
         groups,
         status: BroadcastStatus.IN_PROGRESS,
+        images: imageUrls,
       });
 
       const savedBroadcast = await manager.save(Broadcast, broadcast);
@@ -90,7 +104,11 @@ export class BroadcastsService {
     // Отправляем сообщение каждому уникальному пользователю
     for (const user of usersSet) {
       try {
-        await this.botService.sendMessageToUser(user, broadcast.message); // Отправляем сообщение через бот
+        await this.botService.sendMessageToUser(
+          user,
+          broadcast.message,
+          broadcast.images,
+        ); // Отправляем сообщение через бот
         this.logger.log(`Message sent to user ${user.telegram.telegram_id}`);
       } catch (error) {
         this.logger.warn(

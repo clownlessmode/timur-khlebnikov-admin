@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Message } from './entities/message.entity';
-import { EntityManager } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { SendDto } from './dto/send.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UsersService } from 'src/users/users.service';
@@ -20,6 +20,14 @@ export class MessagesService {
         },
       },
     });
+  }
+
+  async markMessagesAsRead(messageIds: string[]): Promise<void> {
+    await this.manager.update(
+      'Message', // Ensure this matches your message table/entity name
+      { id: In(messageIds) }, // Use `In` to target multiple IDs
+      { isRead: true },
+    );
   }
 
   async create(dto: CreateMessageDto): Promise<Message> {

@@ -20,7 +20,7 @@ export abstract class DefaultEntity extends BaseEntity {
   })
   @CreateDateColumn({
     type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP(6)',
+    default: () => "CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Moscow'",
   })
   public readonly created_at: string;
 

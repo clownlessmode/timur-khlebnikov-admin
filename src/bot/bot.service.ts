@@ -194,24 +194,26 @@ export class BotService {
   async sendMessageToUser(
     user: User,
     message: string,
-    imageUrl?: string, // Добавляем необязательный параметр для изображения
+    imageUrls?: string[], // Изменили на массив изображений
   ): Promise<void> {
     try {
       if (user.telegram && user.telegram.telegram_id) {
-        if (imageUrl) {
-          // Если есть изображение, отправляем фото с подписью
-          await this.bot.telegram.sendPhoto(
-            user.telegram.telegram_id,
-            imageUrl,
-            {
-              caption: message, // Используем message как подпись
-            },
-          );
-          this.logger.log(
-            `Photo with caption sent to user ${user.telegram.telegram_id}`,
-          );
+        if (imageUrls && imageUrls.length > 0) {
+          // Если есть изображения, отправляем каждое с подписью
+          for (const imageUrl of imageUrls) {
+            await this.bot.telegram.sendPhoto(
+              user.telegram.telegram_id,
+              imageUrl,
+              {
+                caption: message, // Используем message как подпись
+              },
+            );
+            this.logger.log(
+              `Photo with caption sent to user ${user.telegram.telegram_id}`,
+            );
+          }
         } else {
-          // Если изображения нет, отправляем только текстовое сообщение
+          // Если изображений нет, отправляем только текстовое сообщение
           await this.bot.telegram.sendMessage(
             user.telegram.telegram_id,
             message,

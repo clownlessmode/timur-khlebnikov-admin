@@ -16,4 +16,7 @@ export class Message extends DefaultEntity {
 
   @ManyToOne(() => User, (user) => user.messages, { onDelete: 'CASCADE' })
   user: User;
+
+  @Column({ default: false })
+  isRead: boolean;
 }

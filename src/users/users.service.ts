@@ -32,7 +32,12 @@ export class UsersService {
   }
 
   async findMany(): Promise<User[]> {
-    return await this.manager.find(User, { relations: { groups: true } });
+    return await this.manager.find(User, {
+      relations: { groups: true, messages: true },
+      order: {
+        created_at: 'DESC',
+      },
+    });
   }
 
   // Метод для создания нового пользователя

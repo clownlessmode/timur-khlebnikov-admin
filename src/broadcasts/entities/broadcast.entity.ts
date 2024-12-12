@@ -12,12 +12,12 @@ export class Broadcast extends DefaultEntity {
   @Column()
   message: string;
 
-  // @ApiProperty({
-  //   description: 'Array of image URLs related to the report',
-  //   type: [String],
-  // })
-  // @Column('text', { array: true })
-  // images: string[];
+  @ApiProperty({
+    description: 'Array of image URLs related to the report',
+    type: [String],
+  })
+  @Column('text', { array: true })
+  images: string[];
 
   @ManyToMany(() => Group, (group) => group.broadcasts)
   @JoinTable()

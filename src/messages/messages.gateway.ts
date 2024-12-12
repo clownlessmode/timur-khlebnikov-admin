@@ -67,7 +67,9 @@ export class MessagesGateway
     @MessageBody() message: SendDto,
   ) {
     this.logger.log(`Received message: ${message}`);
-    const user = await this.manager.findOne(User, {});
+    const user = await this.manager.findOne(User, {
+      where: { id: message.id },
+    });
     console.log(user);
     try {
       this.bot.telegram.sendMessage(user.telegram.telegram_id, message.message);

@@ -6,12 +6,15 @@ import {
   Delete,
   Param,
   Body,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import { BroadcastsService } from './broadcasts.service';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Broadcast } from './entities/broadcast.entity';
 import { CreateBroadcastDto } from './dto/create-broadcast.dto';
 import { UpdateBroadcastDto } from './dto/update-broadcast.dto';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('broadcasts')
 export class BroadcastsController {
@@ -41,15 +44,18 @@ export class BroadcastsController {
   // Создание новой рассылки
   @Post()
   @ApiOperation({ summary: 'Создать новую рассылку' })
+  @ApiConsumes('multipart/form-data')
   @ApiResponse({
     status: 201,
-    description: 'Создана новая рассылка',
+    description: 'Рассылка успешно создана',
     type: Broadcast,
   })
+  @UseInterceptors(FilesInterceptor('images', 10)) // Обработка до 10 файлов
   async create(
     @Body() createBroadcastDto: CreateBroadcastDto,
+    @UploadedFiles() files?: Express.Multer.File[],
   ): Promise<Broadcast> {
-    return this.broadcastsService.createBroadcast(createBroadcastDto);
+    return this.broadcastsService.createBroadcast(createBroadcastDto, files);
   }
 
   // Обновление рассылки по ID

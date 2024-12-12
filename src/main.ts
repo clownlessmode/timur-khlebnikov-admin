@@ -30,6 +30,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'https://r6nt2plp-3000.asse.devtunnels.ms',
+      'https://timur-khlebnikov-app-mz8p.vercel.app',
     ],
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
