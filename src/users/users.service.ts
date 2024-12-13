@@ -5,6 +5,7 @@ import { EntityManager, In } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Group } from 'src/groups/entities/group.entity';
+import Variant from 'src/messages/entities/variant.enum';
 
 @Injectable()
 export class UsersService {
@@ -32,12 +33,25 @@ export class UsersService {
   }
 
   async findMany(): Promise<User[]> {
-    return await this.manager.find(User, {
-      relations: { groups: true, messages: true },
-      order: {
-        created_at: 'DESC',
-      },
-    });
+    const users = await this.manager
+      .createQueryBuilder(User, 'user')
+      .leftJoinAndSelect('user.groups', 'groups')
+      .leftJoinAndSelect('user.telegram', 'telegram')
+      .leftJoinAndSelect(
+        'user.messages',
+        'messages',
+        'messages.isRead = :isRead AND messages.variant = :variant',
+        { isRead: false, variant: Variant.INCOMING },
+      )
+      .orderBy('CASE WHEN messages.id IS NOT NULL THEN 1 ELSE 2 END', 'ASC')
+      .addOrderBy('messages.created_at', 'DESC', 'NULLS LAST')
+      .addOrderBy('user.created_at', 'DESC')
+      .getMany();
+
+    // console.log(JSON.stringify(users, null, 2));
+    // .leftJoinAndSelect('user.telegram', 'telegram')
+
+    return users;
   }
 
   // Метод для создания нового пользователя

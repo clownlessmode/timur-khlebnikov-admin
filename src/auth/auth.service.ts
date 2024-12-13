@@ -38,6 +38,7 @@ export class AuthService {
       first_name: dto.first_name,
       is_bot: dto.is_bot,
       telegram_id: dto.id,
+      last_name: dto.last_name,
       username: dto.username,
       language_code: dto.language_code,
     });

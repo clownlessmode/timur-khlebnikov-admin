@@ -13,6 +13,9 @@ export class Telegram extends DefaultEntity {
   first_name?: string;
 
   @Column({ nullable: true })
+  last_name?: string;
+
+  @Column({ nullable: true })
   language_code: string;
 
   @Column()

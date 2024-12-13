@@ -15,6 +15,11 @@ export class RegisterDto {
   @IsOptional()
   first_name?: string;
 
+  @ApiProperty({ example: 'John Doe', nullable: true })
+  @IsString()
+  @IsOptional()
+  last_name?: string;
+
   @ApiProperty({ example: 'john_doe_9898', nullable: true })
   @IsString()
   @IsOptional()
